@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profit and Loss Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #23282d;
+        }
+        .container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            overflow-x: auto;
+            max-width: 100%;
+            padding: 0px 0;
+            background-color: #ffffff;
+        }
+        .calculator {
+            width: 300px;
+            margin: 0px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex: 0 0 auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"], input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 16px);
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4c6faf;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #547ac0;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        .total-result {
+            margin-top: 40px;
+            padding: 20px;
+            border-top: 2px solid #ffffff;
+            font-size: 1.4em;
+            text-align: center;
+            color: #ffffff
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+        .controls button {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            background-color: #f4f4f4;
+            color: #23282d;
+            font-size: 1.5em;
+            text-align: center;
+            line-height: 1em;
+            padding: 0;
+            margin: 0 10px;
+        }
+        .controls button:hover {
+            background-color: #e0e0e0;
+        }
+        .controls button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+        .controls .generate-report {
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 1em;
+            text-align: center;
+            display: block;
+            margin: 20px auto;
+        }
+        .controls .generate-report:hover {
+            background-color: #45a049;
+        }
+        .print-report {
+            display: none;
+            margin-top: 20px;
+            cursor: pointer;
+            color: #007B9E;
+            text-decoration: underline;
+        }
+        .print-report:hover {
+            color: #005f73;
+        }
+        .profit {
+            color: green;
+        }
+        .loss {
+            color: red;
+            font-style: italic;
+        }
+        .report {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            width: 100%;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="calculatorsContainer">
+    <!-- Calculators will be inserted here -->
+</div>
+
+<div class="controls">
+    <button id="addCalculator" onclick="addCalculator()">+</button>
+    <button id="removeCalculator" onclick="removeCalculator()" disabled>-</button>
+</div>
+
+<div class="total-result" id="totalResult"></div>
+
+<button class="generate-report" onclick="generateReport()">Generate Profit and Loss Report</button>
+
+<div id="reportContainer"></div>
+<div class="print-report" id="printReport" onclick="printReport()">Print Report</div>
+
+<script>
+    let calculatorCount = 1;
+    const maxCalculators = 10;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        addCalculator();
+    });
+
+    function addCalculator() {
+        if (calculatorCount > maxCalculators) return;
+
+        const container = document.getElementById('calculatorsContainer');
+        const calculatorDiv = document.createElement('div');
+        calculatorDiv.className = 'calculator';
+        calculatorDiv.id = `calculator${calculatorCount}`;
+        calculatorDiv.innerHTML = `
+            <h2>Profit and Loss Calculator</h2>
+            <label for="name${calculatorCount}">Name:</label>
+            <input type="text" id="name${calculatorCount}" placeholder="Enter name">
+            
+            <label for="costPrice${calculatorCount}">Cost Price (CP):</label>
+            <input type="number" id="costPrice${calculatorCount}" required>
+
+            <label for="quantity${calculatorCount}">Quantity:</label>
+            <input type="number" id="quantity${calculatorCount}" required>
+
+            <label for="sellingPrice${calculatorCount}">Selling Price (SP):</label>
+            <input type="number" id="sellingPrice${calculatorCount}" required>
+
+            <label for="shippingCost${calculatorCount}">Shipping Cost (SC):</label>
+            <input type="number" id="shippingCost${calculatorCount}" placeholder="Optional">
+
+            <label for="discountPercentage${calculatorCount}">Discount Percentage (D%):</label>
+            <input type="number" id="discountPercentage${calculatorCount}" placeholder="Optional">
+
+            <label for="affiliatePercentage${calculatorCount}">Affiliate Percentage (A%):</label>
+            <input type="number" id="affiliatePercentage${calculatorCount}" placeholder="Optional">
+
+            <button onclick="calculateProfitLoss(${calculatorCount})">Calculate</button>
+            <button style="background-color: #f4f4f4; color: #0d0d0d;" onclick="resetCalculator(${calculatorCount})">Reset</button>
+
+            <div class="result" id="result${calculatorCount}"></div>
+        `;
+        container.appendChild(calculatorDiv);
+
+        calculatorCount++;
+        document.getElementById('removeCalculator').disabled = calculatorCount <= 2;
+    }
+
+    function removeCalculator() {
+        if (calculatorCount <= 2) return;
+
+        calculatorCount--;
+        const container = document.getElementById('calculatorsContainer');
+        container.removeChild(container.lastElementChild);
+
+        document.getElementById('removeCalculator').disabled = calculatorCount <= 2;
+        calculateTotalResults();
+    }
+
+    function calculateProfitLoss(id) {
+        const CP = parseFloat(document.getElementById('costPrice' + id).value);
+        const quantity = parseInt(document.getElementById('quantity' + id).value);
+        const SP = parseFloat(document.getElementById('sellingPrice' + id).value);
+
+        if (isNaN(CP) || isNaN(quantity) || isNaN(SP) || CP <= 0 || quantity <= 0 || SP <= 0) {
+            document.getElementById('result' + id).innerHTML = '';
+            return;
+        }
+
+        const totalCP = CP * quantity;
+        const totalSP = SP * quantity;
+
+        const SC = parseFloat(document.getElementById('shippingCost' + id).value) || 0;
+        const D = parseFloat(document.getElementById('discountPercentage' + id).value) / 100 || 0;
+        const A = parseFloat(document.getElementById('affiliatePercentage' + id).value) / 100 || 0;
+
+        const FSP_NoDiscount = totalSP;
+        const FSP_Discount = totalSP * (1 - D);
+        const FSP_Affiliate = FSP_Discount * (1 - A);
+        const affiliateCommission = FSP_Discount * A;
+        const TC = totalCP + SC;
+        const profitOrLoss = FSP_Affiliate - TC;
+        const discountAmount = totalSP * D;
+        const combinedPercentage = ((affiliateCommission + discountAmount + SC) / totalSP) * 100;
+
+        let resultText = `Cost Price: $${totalCP.toFixed(2)}<br>`;
+        resultText += `Final Price (no discount): $${FSP_NoDiscount.toFixed(2)}<br>`;
+        if (D > 0) {
+            resultText += `Final Price (with discount): $${FSP_Discount.toFixed(2)}<br>`;
+            resultText += `Discount Amount: $${discountAmount.toFixed(2)}<br>`;
+        }
+        if (A > 0) {
+            resultText += `Affiliate's Commission: $${affiliateCommission.toFixed(2)}<br>`;
+        }
+        if (SC > 0) {
+            resultText += `Shipping Cost: $${SC.toFixed(2)}<br>`;
+        }
+        resultText += `Total Cost: $${TC.toFixed(2)}<br>`;
+        resultText += `Combined Percentage: ${combinedPercentage.toFixed(2)}%<br>`;
+
+        if (profitOrLoss > 0) {
+            resultText += `Profit: <span class="profit">$${profitOrLoss.toFixed(2)}</span>`;
+        } else if (profitOrLoss < 0) {
+            resultText += `Loss: <span class="loss">$${Math.abs(profitOrLoss).toFixed(2)}</span>`;
+        } else {
+            resultText += `No Profit No Loss`;
+        }
+
+        document.getElementById('result' + id).innerHTML = resultText;
+        calculateTotalResults();
+    }
+
+    function resetCalculator(id) {
+        document.getElementById('name' + id).value = '';
+        document.getElementById('costPrice' + id).value = '';
+        document.getElementById('quantity' + id).value = '';
+        document.getElementById('sellingPrice' + id).value = '';
+        document.getElementById('shippingCost' + id).value = '';
+        document.getElementById('discountPercentage' + id).value = '';
+        document.getElementById('affiliatePercentage' + id).value = '';
+        document.getElementById('result' + id).innerHTML = '';
+        calculateTotalResults();
+    }
+
+    function calculateTotalResults() {
+        let totalProfitOrLoss = 0;
+        let totalRevenue = 0;
+        let totalCost = 0;
+        let totalDiscount = 0;
+        let totalAffiliateCommission = 0;
+        let totalShippingCost = 0;
+        let hasValidData = false;
+
+        for (let i = 1; i < calculatorCount; i++) {
+            const CP = parseFloat(document.getElementById('costPrice' + i).value);
+            const quantity = parseInt(document.getElementById('quantity' + i).value);
+            const SP = parseFloat(document.getElementById('sellingPrice' + i).value);
+            const SC = parseFloat(document.getElementById('shippingCost' + i).value) || 0;
+            const D = parseFloat(document.getElementById('discountPercentage' + i).value) / 100 || 0;
+            const A = parseFloat(document.getElementById('affiliatePercentage' + i).value) / 100 || 0;
+
+            if (isNaN(CP) || isNaN(quantity) || isNaN(SP) || CP <= 0 || quantity <= 0 || SP <= 0) continue;
+
+            hasValidData = true;
+
+            const totalCP = CP * quantity;
+            const totalSP = SP * quantity;
+            const FSP_Discount = totalSP * (1 - D);
+            const FSP_Affiliate = FSP_Discount * (1 - A);
+            const affiliateCommission = FSP_Discount * A;
+            const TC = totalCP + SC;
+            const profitOrLoss = FSP_Affiliate - TC;
+            const discountAmount = totalSP * D;
+
+            totalRevenue += totalSP;
+            totalCost += TC;
+            totalProfitOrLoss += profitOrLoss;
+            totalDiscount += discountAmount;
+            totalAffiliateCommission += affiliateCommission;
+            totalShippingCost += SC;
+        }
+
+        if (!hasValidData) {
+            document.getElementById('totalResult').innerHTML = '';
+            return;
+        }
+
+        let combinedPercentage = ((totalAffiliateCommission + totalDiscount + totalShippingCost) / totalRevenue) * 100;
+
+        let totalResultText = `Total Revenue: $${totalRevenue.toFixed(2)}<br>`;
+        totalResultText += `Total Cost: $${totalCost.toFixed(2)}<br>`;
+        if (totalDiscount > 0) {
+            totalResultText += `Total Discount Amount: $${totalDiscount.toFixed(2)}<br>`;
+        }
+        if (totalAffiliateCommission > 0) {
+            totalResultText += `Total Affiliate's Commission: $${totalAffiliateCommission.toFixed(2)}<br>`;
+        }
+        if (totalShippingCost > 0) {
+            totalResultText += `Total Shipping Cost: $${totalShippingCost.toFixed(2)}<br>`;
+        }
+        totalResultText += `Combined Percentage: ${combinedPercentage.toFixed(2)}%<br>`;
+
+        if (totalProfitOrLoss > 0) {
+            totalResultText += `Total Profit: <span class="profit">$${totalProfitOrLoss.toFixed(2)}</span>`;
+        } else if (totalProfitOrLoss < 0) {
+            totalResultText += `Total Loss: <span class="loss">$${Math.abs(totalProfitOrLoss).toFixed(2)}</span>`;
+        } else {
+            totalResultText += `Total Profit or Loss: $${totalProfitOrLoss.toFixed(2)}`;
+        }
+
+        document.getElementById('totalResult').innerHTML = totalResultText;
+    }
+
+    function generateReport() {
+        calculateTotalResults();
+        
+        let totalRevenue = 0;
+        let totalCost = 0;
+        let totalDiscount = 0;
+        let totalAffiliateCommission = 0;
+        let totalShippingCost = 0;
+        let totalProfitOrLoss = 0;
+
+        let reportText = '<div class="report" id="printableReport"><h3>Profit and Loss Report</h3>';
+
+        for (let i = 1; i < calculatorCount; i++) {
+            const name = document.getElementById('name' + i).value || `Calculator ${i}`;
+            const CP = parseFloat(document.getElementById('costPrice' + i).value);
+            const quantity = parseInt(document.getElementById('quantity' + i).value);
+            const SP = parseFloat(document.getElementById('sellingPrice' + i).value);
+            const SC = parseFloat(document.getElementById('shippingCost' + i).value) || 0;
+            const D = parseFloat(document.getElementById('discountPercentage' + i).value) / 100 || 0;
+            const A = parseFloat(document.getElementById('affiliatePercentage' + i).value) / 100 || 0;
+
+            if (isNaN(CP) || isNaN(quantity) || isNaN(SP) || CP <= 0 || quantity <= 0 || SP <= 0) continue;
+
+            const totalCP = CP * quantity;
+            const totalSP = SP * quantity;
+            const FSP_Discount = totalSP * (1 - D);
+            const FSP_Affiliate = FSP_Discount * (1 - A);
+            const affiliateCommission = FSP_Discount * A;
+            const TC = totalCP + SC;
+            const profitOrLoss = FSP_Affiliate - TC;
+            const discountAmount = totalSP * D;
+            const combinedPercentage = ((affiliateCommission + discountAmount + SC) / totalSP) * 100;
+
+            totalRevenue += totalSP;
+            totalCost += TC;
+            totalProfitOrLoss += profitOrLoss;
+            totalDiscount += discountAmount;
+            totalAffiliateCommission += affiliateCommission;
+            totalShippingCost += SC;
+
+            reportText += `<h4>${name}</h4>`;
+            reportText += `Cost Price: $${totalCP.toFixed(2)}<br>`;
+            reportText += `Final Price (no discount): $${totalSP.toFixed(2)}<br>`;
+            if (D > 0) {
+                reportText += `Final Price (with discount): $${FSP_Discount.toFixed(2)}<br>`;
+                reportText += `Discount Amount: $${discountAmount.toFixed(2)}<br>`;
+            }
+            if (A > 0) {
+                reportText += `Affiliate's Commission: $${affiliateCommission.toFixed(2)}<br>`;
+            }
+            if (SC > 0) {
+                reportText += `Shipping Cost: $${SC.toFixed(2)}<br>`;
+            }
+            reportText += `Total Cost: $${TC.toFixed(2)}<br>`;
+            reportText += `Combined Percentage: ${combinedPercentage.toFixed(2)}%<br>`;
+            if (profitOrLoss > 0) {
+                reportText += `Profit: <span class="profit">$${profitOrLoss.toFixed(2)}</span><br>`;
+            } else if (profitOrLoss < 0) {
+                reportText += `Loss: <span class="loss">$${Math.abs(profitOrLoss).toFixed(2)}</span><br>`;
+            } else {
+                reportText += `No Profit No Loss<br>`;
+            }
+        }
+
+        let combinedPercentage = ((totalAffiliateCommission + totalDiscount + totalShippingCost) / totalRevenue) * 100;
+
+        reportText += `<h3>Total Summary</h3>`;
+        reportText += `Total Revenue: $${totalRevenue.toFixed(2)}<br>`;
+        reportText += `Total Cost: $${totalCost.toFixed(2)}<br>`;
+        if (totalDiscount > 0) {
+            reportText += `Total Discount Amount: $${totalDiscount.toFixed(2)}<br>`;
+        }
+        if (totalAffiliateCommission > 0) {
+            reportText += `Total Affiliate's Commission: $${totalAffiliateCommission.toFixed(2)}<br>`;
+        }
+        if (totalShippingCost > 0) {
+            reportText += `Total Shipping Cost: $${totalShippingCost.toFixed(2)}<br>`;
+        }
+        reportText += `Combined Percentage: ${combinedPercentage.toFixed(2)}%<br>`;
+
+        if (totalProfitOrLoss > 0) {
+            reportText += `Total Profit: <span class="profit">$${totalProfitOrLoss.toFixed(2)}</span>`;
+        } else if (totalProfitOrLoss < 0) {
+            reportText += `Total Loss: <span class="loss">$${Math.abs(totalProfitOrLoss).toFixed(2)}</span>`;
+        } else {
+            reportText += `Total Profit or Loss: $${totalProfitOrLoss.toFixed(2)}`;
+        }
+
+        reportText += '</div>';
+
+        document.getElementById('reportContainer').innerHTML = reportText;
+        document.getElementById('printReport').style.display = 'block';
+    }
+
+    function printReport() {
+        const reportContent = document.getElementById('printableReport').outerHTML;
+        const printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write('<html><head><title>Print Report</title>');
+        printWindow.document.write('<style>body{font-family: Arial, sans-serif; margin: 20px;}</style></head><body>');
+        printWindow.document.write(reportContent);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.print();
+    }
+</script>
+
+</body>
+</html>
